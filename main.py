@@ -21,10 +21,6 @@ app = FastAPI(
     title="Qualificador de Leads com IA",
     description="Analisa a mensagem de um lead, extrai as informações importantes e classifica o potencial de compra, de acordo com o segmento.",
 )
-app = FastAPI(
-    title="Qualificador de Leads com IA",
-    description="Analisa a mensagem de um lead, extrai as informações importantes e classifica o potencial de compra, de acordo com o segmento.",
-)
 
 ORIGENS_PERMITIDAS = os.getenv("ORIGENS_PERMITIDAS", "http://localhost:5173").split(",")
 
