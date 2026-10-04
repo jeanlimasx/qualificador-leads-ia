@@ -3,6 +3,7 @@ import time
 
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from google import genai
 from google.genai import errors, types
 from pydantic import BaseModel, Field
@@ -20,7 +21,19 @@ app = FastAPI(
     title="Qualificador de Leads com IA",
     description="Analisa a mensagem de um lead, extrai as informações importantes e classifica o potencial de compra, de acordo com o segmento.",
 )
+app = FastAPI(
+    title="Qualificador de Leads com IA",
+    description="Analisa a mensagem de um lead, extrai as informações importantes e classifica o potencial de compra, de acordo com o segmento.",
+)
 
+ORIGENS_PERMITIDAS = os.getenv("ORIGENS_PERMITIDAS", "http://localhost:5173").split(",")
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[origem.strip() for origem in ORIGENS_PERMITIDAS],
+    allow_methods=["GET", "POST"],
+    allow_headers=["Content-Type"],
+)
 
 class MensagemLead(BaseModel):
     segmento: str = Field(examples=["imobiliario"])
