@@ -1,9 +1,10 @@
 import os
+import time
 
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException
 from google import genai
-from google.genai import types
+from google.genai import errors, types
 from pydantic import BaseModel, Field
 
 from segmentos import SEGMENTOS
@@ -12,6 +13,8 @@ load_dotenv()
 
 client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
 MODELO = os.getenv("GEMINI_MODEL", "gemini-flash-latest")
+MODELO_RESERVA = os.getenv("GEMINI_MODEL_RESERVA", "gemini-flash-lite-latest")
+ERROS_TEMPORARIOS = {429, 500, 503}
 
 app = FastAPI(
     title="Qualificador de Leads com IA",
@@ -61,6 +64,28 @@ Regras:
 Responda em português."""
 
 
+def chamar_ia(mensagem: str, instrucoes: str):
+    config = types.GenerateContentConfig(
+        system_instruction=instrucoes,
+        response_mime_type="application/json",
+        response_schema=AnaliseLead,
+        temperature=0.2,
+    )
+    ultimo_erro = None
+    for modelo in [MODELO, MODELO_RESERVA]:
+        for tentativa in range(3):
+            try:
+                return client.models.generate_content(
+                    model=modelo, contents=mensagem, config=config
+                )
+            except errors.APIError as erro:
+                ultimo_erro = erro
+                if erro.code not in ERROS_TEMPORARIOS:
+                    raise
+                time.sleep(2**tentativa)
+    raise ultimo_erro
+
+
 @app.get("/")
 def status():
     return {"status": "online", "projeto": "Qualificador de Leads com IA"}
@@ -81,16 +106,7 @@ def qualificar(lead: MensagemLead):
         )
 
     try:
-        resposta = client.models.generate_content(
-            model=MODELO,
-            contents=lead.mensagem,
-            config=types.GenerateContentConfig(
-                system_instruction=montar_instrucoes(segmento),
-                response_mime_type="application/json",
-                response_schema=AnaliseLead,
-                temperature=0.2,
-            ),
-        )
+        resposta = chamar_ia(lead.mensagem, montar_instrucoes(segmento))
     except Exception as erro:
         raise HTTPException(status_code=502, detail=f"Erro ao consultar a IA: {erro}")
 
