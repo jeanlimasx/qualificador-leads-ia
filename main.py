@@ -70,7 +70,9 @@ Regras:
    Um lead é quente quando: {segmento['regra_quente']}.
 4. "pontuacao" vai de 0 a 100.
 5. "proxima_acao" é a melhor próxima mensagem ou ação do vendedor, em uma frase.
-Responda em português."""
+6. Em "informacoes", use como "campo" o nome do critério exatamente como está na lista acima.
+Responda em português do Brasil, com acentuação e ortografia corretas em todos os textos,
+inclusive nos nomes dos campos (ex.: "até", "verão", "região", "urgência")."""
 
 
 def chamar_ia(mensagem: str, instrucoes: str):
